@@ -1,0 +1,33 @@
+# MongoDB Configuration
+MONGODB_URL=your-mongodb-connection-string-here
+DATABASE_NAME=rag_chat_app
+
+# Authentication
+SECRET_KEY=your-super-secret-key-change-this-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# OpenAI API Configuration
+OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_LLM_MODEL=gpt-4o-mini
+
+# Pinecone Configuration
+PINECONE_API_KEY=your-pinecone-api-key-here
+PINECONE_PROJECT_NAME=rag-chat-app
+PINECONE_INDEX_NAME=rag-chat-embeddings
+
+# RAG Configuration
+CHUNK_SIZE=600
+CHUNK_OVERLAP=100
+TOP_K_RESULTS=6
+EMBEDDING_DIMENSION=1536
+
+# File Upload Configuration
+MAX_FILE_SIZE_MB=10
+ALLOWED_FILE_TYPES=pdf,txt,docx,doc
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=8000
+DEBUG=True

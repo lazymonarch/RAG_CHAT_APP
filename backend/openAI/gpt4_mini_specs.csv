@@ -1,0 +1,17 @@
+Parameter,Value/Range,Description,RAG Implementation
+model,gpt-4o-mini,Model identifier for GPT-4o mini,Use this exact string for chat completions
+messages,Array of message objects,Conversation history with role (system/user/assistant) and content,"Include system prompt with context, user query"
+max_tokens,1 to 16384 (default: unlimited),Maximum tokens in response,Set to 200-500 for concise answers
+temperature,0.0 to 2.0 (default: 1.0),"Controls randomness (0=deterministic, 2=very creative)",Use 0.1-0.3 for factual RAG responses
+top_p,0.0 to 1.0 (default: 1.0),Nucleus sampling parameter,Keep at 1.0 for most RAG applications
+frequency_penalty,-2.0 to 2.0 (default: 0),Penalizes repeated tokens,Set to 0.1 to reduce repetition
+presence_penalty,-2.0 to 2.0 (default: 0),Encourages talking about new topics,Set to 0.1 to encourage diverse responses
+stop,string or array (max 4),Sequences where API stops generating,Can use to stop at specific markers
+stream,true/false (default: false),Stream response tokens as generated,Set to false for simpler implementation
+user,optional string identifier,User identifier for monitoring,Include for production tracking
+context_window,"128,000 tokens",Total tokens that can be processed (input + output),Fits large document contexts + conversation history
+max_output_tokens,"16,384 tokens",Maximum tokens the model can generate in response,Sufficient for detailed responses
+input_pricing_per_1m,$0.15,Cost per million input tokens,Very cost-effective for RAG applications
+output_pricing_per_1m,$0.60,Cost per million output tokens,Higher cost but still economical
+rate_limit_tier_1_rpm,500,API requests per minute limit,Handle rate limiting with queuing
+rate_limit_tier_1_tpm,"200,000",Total tokens per minute limit,Monitor total token usage

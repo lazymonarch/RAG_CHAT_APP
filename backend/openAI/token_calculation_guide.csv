@@ -1,0 +1,9 @@
+Content Type,Tokens per Character,Tokens per Word,Example for 1MB Document,Calculation Method
+Plain English Text,0.25 (1 token ≈ 4 chars),1.3 (average),~200k tokens,"Use tiktoken.encoding_for_model(""gpt-4o-mini"")"
+PDF Text (extracted),0.25-0.3 (formatting overhead),1.3-1.5,~210k-250k tokens,"Extract text first, then count tokens"
+Code/Technical Content,"0.3-0.4 (symbols, syntax)",1.5-2.0,~250k-300k tokens,Account for syntax highlighting
+Formatted Text (Markdown),0.25-0.3 (markup overhead),1.3-1.5,~210k-250k tokens,Count after markdown processing
+Non-English Text,0.3-0.5 (language dependent),1.5-2.5,~250k-400k tokens,Test with sample text for accuracy
+User Query (typical),0.25,1.3,N/A,Direct counting with tiktoken
+System Prompt,0.25,1.3,N/A,Include context formatting
+AI Response (typical),0.25,1.3,N/A,Count actual response tokens

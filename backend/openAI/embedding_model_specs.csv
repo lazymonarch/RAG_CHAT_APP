@@ -1,0 +1,15 @@
+Parameter,Value/Range,Description,Implementation Notes
+model,text-embedding-3-small,Model identifier for OpenAI embedding API,Use this exact string for API calls
+input,string or array of strings,Text to embed - single string or array up to 2048 items,Batch multiple texts in single API call for efficiency
+encoding_format,float or base64,Return format for embeddings vector,"Use ""float"" for standard vector operations"
+dimensions,1 to 1536 (default: 1536),Number of dimensions in output vector (can be reduced),Can reduce dimensions to save storage/compute
+user,optional string identifier,Unique identifier for monitoring/abuse detection,Include for production monitoring
+max_input_tokens,"8,191 tokens",Maximum tokens per input text chunk,Split longer texts before embedding
+output_dimensions,"1,536 dimensions",Default vector dimensions (can be shortened without normalization),Higher dimensions = better quality but more storage
+pricing_per_1k_tokens,$0.02,Cost per 1000 input tokens,Very cost-effective compared to previous models
+rate_limit_tier_1_rpm,"3,000",Requests per minute limit for Tier 1,Sufficient for 20 chats/day with batching
+rate_limit_tier_1_tpm,"1,000,000",Tokens per minute limit for Tier 1,Monitor usage to avoid rate limits
+performance_mteb,62.3%,Performance on MTEB benchmark,Strong performance on English tasks
+performance_miracl,44.0%,Performance on MIRACL benchmark,Good multilingual retrieval performance
+recommended_chunk_size,200-800 tokens,Optimal chunk size for semantic coherence,Balance between context and processing speed
+recommended_overlap,10-20% of chunk size,Overlap between consecutive chunks,Prevents information loss at chunk boundaries
