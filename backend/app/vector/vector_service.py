@@ -124,6 +124,48 @@ class VectorService:
             logger.error(f"Failed to search similar content: {e}")
             return []
     
+    async def search_document_scoped_content(
+        self, 
+        query: str, 
+        user_id: str,
+        document_ids: List[str],
+        top_k: int = None
+    ) -> List[Dict[str, Any]]:
+        """Search for similar content within specific documents."""
+        try:
+            # Generate query embedding
+            query_embedding = await self.embeddings.generate_query_embedding(query)
+            
+            # Create filter for user-specific content and document scope
+            filter_dict = {
+                "user_id": user_id,
+                "document_id": {"$in": document_ids}
+            }
+            
+            # Search in Pinecone
+            results = await self.pinecone.query_vectors(
+                query_vector=query_embedding,
+                top_k=top_k or settings.TOP_K_RESULTS,
+                filter_dict=filter_dict
+            )
+            
+            # Format results
+            formatted_results = []
+            for result in results:
+                formatted_results.append({
+                    "id": result["id"],
+                    "score": result["score"],
+                    "text": result["metadata"].get("text", ""),
+                    "metadata": result["metadata"]
+                })
+            
+            logger.info(f"Found {len(formatted_results)} similar content pieces in {len(document_ids)} documents")
+            return formatted_results
+            
+        except Exception as e:
+            logger.error(f"Failed to search document-scoped content: {e}")
+            return []
+    
     async def delete_document_vectors(self, pinecone_ids: List[str]) -> bool:
         """Delete all vectors for a document."""
         try:

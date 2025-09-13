@@ -38,6 +38,9 @@ class ConversationResponse(ConversationBase):
     last_message_at: Optional[datetime] = None
     message_count: int = 0
     is_active: bool = True
+    chat_type: str = "universal"
+    selected_document_ids: List[str] = []
+    document_names: List[str] = []
 
 
 class ChatQuery(BaseModel):
@@ -105,4 +108,36 @@ class ConversationDetailResponse(BaseModel):
     last_message_at: Optional[datetime] = None
     message_count: int
     is_active: bool
+    chat_type: str = "universal"
+    selected_document_ids: List[str] = []
+    document_names: List[str] = []
     messages: List[MessageResponse]
+
+
+# Document Chat Schemas
+class DocumentSelectionRequest(BaseModel):
+    document_ids: List[str]
+
+
+class DocumentChatStartRequest(BaseModel):
+    document_ids: List[str]
+    title: Optional[str] = None
+
+
+class DocumentChatStartResponse(BaseModel):
+    conversation_id: str
+    title: str
+    chat_type: str = "document"
+    selected_document_ids: List[str]
+    document_names: List[str]
+    created_at: datetime
+
+
+class DocumentInfo(BaseModel):
+    id: str
+    filename: str
+    original_filename: str
+    file_type: str
+    file_size: int
+    upload_timestamp: datetime
+    is_available: bool = True

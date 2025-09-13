@@ -201,6 +201,30 @@ class APIClient:
         
         return self._handle_response(response)
     
+    # Document Chat Methods
+    def get_selectable_documents(self) -> List[Dict[str, Any]]:
+        """Get documents available for document chat."""
+        response = self.session.get(
+            f"{self.base_url}/chat/documents/selectable",
+            headers=self._get_headers()
+        )
+        
+        return self._handle_response(response)
+    
+    def start_document_conversation(self, document_ids: List[str]) -> Dict[str, Any]:
+        """Start a new document-scoped conversation."""
+        data = {
+            "document_ids": document_ids
+        }
+        
+        response = self.session.post(
+            f"{self.base_url}/chat/start-document",
+            json=data,
+            headers=self._get_headers()
+        )
+        
+        return self._handle_response(response)
+    
     # Utility Methods
     def validate_file(self, file) -> tuple[bool, str]:
         """Validate uploaded file."""

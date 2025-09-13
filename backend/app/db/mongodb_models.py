@@ -36,6 +36,9 @@ class Conversation(Document):
     last_message_at: Optional[datetime] = None
     message_count: int = 0
     is_active: bool = True
+    chat_type: str = "universal"  # "universal" or "document"
+    selected_document_ids: List[str] = []  # For document-scoped chats
+    document_names: List[str] = []  # Human-readable document names for display
     
     class Settings:
         name = "conversations"

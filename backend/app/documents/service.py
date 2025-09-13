@@ -38,19 +38,31 @@ class DocumentProcessingService:
                     "document_id": None
                 }
             
-            # Generate document ID
-            document_id = str(uuid.uuid4())
-            
-            # Extract text content
+            # Extract text content first
             text_content = await self._extract_text(file_content, filename)
             if not text_content:
                 return {
                     "success": False,
                     "error": "Failed to extract text from document",
-                    "document_id": document_id
+                    "document_id": None
                 }
             
-            # Create document metadata
+            # Create document record in MongoDB first to get the ID
+            document_record = DocumentModel(
+                user_id=user_id,
+                filename=filename,
+                original_filename=filename,
+                file_type=self._get_file_extension(filename),
+                file_size=len(file_content),
+                chunk_count=0,  # Will be updated after processing
+                pinecone_ids=[],  # Will be updated after processing
+                processing_status="processing"
+            )
+            
+            await document_record.insert()
+            document_id = str(document_record.id)
+            
+            # Create document metadata using MongoDB ObjectId
             document_metadata = {
                 "document_id": document_id,
                 "user_id": user_id,
@@ -67,29 +79,24 @@ class DocumentProcessingService:
             )
             
             if not vector_result["success"]:
+                # Delete the document record if vector processing failed
+                await document_record.delete()
                 return {
                     "success": False,
                     "error": f"Vector processing failed: {vector_result['error']}",
                     "document_id": document_id
                 }
             
-            # Save document metadata to MongoDB
-            document_record = DocumentModel(
-                user_id=user_id,
-                filename=filename,
-                original_filename=filename,
-                file_type=self._get_file_extension(filename),
-                file_size=len(file_content),
-                chunk_count=vector_result["chunk_count"],
-                pinecone_ids=vector_result["pinecone_ids"],
-                processing_status="completed"
-            )
+            # Update document record with vector processing results
+            document_record.chunk_count = vector_result["chunk_count"]
+            document_record.pinecone_ids = vector_result["pinecone_ids"]
+            document_record.processing_status = "completed"
             
-            await document_record.insert()
+            await document_record.save()
             
             # Save chunk details to MongoDB
             await self._save_chunk_details(
-                document_id=document_record.id,
+                document_id=document_id,
                 user_id=user_id,
                 vector_result=vector_result,
                 text_content=text_content,
@@ -102,7 +109,7 @@ class DocumentProcessingService:
             
             return {
                 "success": True,
-                "document_id": str(document_record.id),
+                "document_id": document_id,
                 "filename": filename,
                 "chunk_count": vector_result["chunk_count"],
                 "file_size": len(file_content),

@@ -160,13 +160,7 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Main header
-    st.markdown(f"""
-    <div class="main-header">
-        <h1>{APP_ICON} {APP_TITLE}</h1>
-        <p>Upload documents and chat with AI using RAG technology</p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Main header removed for cleaner UI
     
     # Sidebar
     with st.sidebar:
@@ -234,11 +228,23 @@ def show_main_app():
     
     # Left Sidebar with 3 main sections
     with st.sidebar:
-        # Back button
+        # Back button - smart navigation
         if st.button("← Back", use_container_width=True, type="secondary"):
-            if st.session_state.current_page != "universal_chat":
+            current_page = st.session_state.get("current_page", "universal_chat")
+            
+            # Smart back navigation based on current page
+            if current_page == "document_chat":
                 st.session_state.current_page = "universal_chat"
-                st.rerun()
+            elif current_page == "documents":
+                st.session_state.current_page = "universal_chat"
+            elif current_page == "chat_history":
+                st.session_state.current_page = "universal_chat"
+            elif current_page == "profile":
+                st.session_state.current_page = "universal_chat"
+            else:
+                st.session_state.current_page = "universal_chat"
+            
+            st.rerun()
         
         st.markdown("---")
         
@@ -247,12 +253,17 @@ def show_main_app():
             st.session_state.current_page = "universal_chat"
             st.rerun()
         
-        # Section 2: Documents
-        if st.button("📄 Documents", use_container_width=True):
+        # Section 2: Document Chat
+        if st.button("📄 Document Chat", use_container_width=True):
+            st.session_state.current_page = "document_chat"
+            st.rerun()
+        
+        # Section 3: Documents
+        if st.button("📁 Documents", use_container_width=True):
             st.session_state.current_page = "documents"
             st.rerun()
         
-        # Section 3: Chats (renamed from Chat History)
+        # Section 4: Chats (renamed from Chat History)
         if st.button("💬 Chats", use_container_width=True):
             st.session_state.current_page = "chat_history"
             st.rerun()
@@ -277,6 +288,8 @@ def show_main_app():
     # Main Content Area
     if st.session_state.current_page == "universal_chat":
         show_universal_chat()
+    elif st.session_state.current_page == "document_chat":
+        show_document_chat()
     elif st.session_state.current_page == "documents":
         show_documents_page()
     elif st.session_state.current_page == "chat_history":
@@ -287,7 +300,6 @@ def show_main_app():
 
 def show_documents_page():
     """Show documents management page."""
-    st.title("📄 Document Management")
     
     # Upload section
     st.subheader("📤 Upload New Document")
@@ -307,7 +319,6 @@ def show_documents_page():
 
 def show_universal_chat():
     """Show universal chat interface."""
-    st.title("💬 Universal Chat")
     
     # Chat Mode Indicator
     st.info("🌐 **Universal Mode**: Searching across all your uploaded documents")
@@ -324,34 +335,76 @@ def show_universal_chat():
     except Exception as e:
         st.warning("📄 Unable to load document count. Please check your connection.")
     
-    # Chat Interface
+    # Chat Interface - Always show input field for Universal Chat
     if "current_conversation_id" not in st.session_state or st.session_state.current_conversation_id is None:
-        if st.button("🚀 Start New Chat", type="primary"):
-            start_new_conversation()
-    else:
+        # Auto-start a conversation for Universal Chat
+        start_new_conversation()
+    
+    # Show chat interface
+    show_chat_interface()
+
+
+def show_document_chat():
+    """Show document chat interface."""
+    
+    # Chat Mode Indicator
+    st.info("📄 **Document Mode**: Choose specific documents to chat with")
+    
+    # Document Selection
+    try:
+        from utils.api_client import api_client
+        documents = api_client.get_selectable_documents()
+        
+        if not documents:
+            st.warning("📄 No documents available. Upload documents first!")
+            return
+        
+        st.subheader("📋 Select Documents")
+        
+        # Document selection checkboxes
+        selected_docs = []
+        col1, col2 = st.columns(2)
+        
+        for i, doc in enumerate(documents):
+            with col1 if i % 2 == 0 else col2:
+                if st.checkbox(
+                    f"📄 {doc['original_filename']}",
+                    key=f"doc_{doc['id']}",
+                    help=f"Type: {doc['file_type']}, Size: {doc['file_size']} bytes"
+                ):
+                    selected_docs.append(doc['id'])
+        
+        # Start chat button
+        if selected_docs:
+            st.success(f"✅ Selected {len(selected_docs)} document(s)")
+            
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                if st.button("🚀 Start Document Chat", type="primary"):
+                    start_document_conversation(selected_docs)
+        else:
+            st.info("👆 Select one or more documents to start chatting")
+    
+    except Exception as e:
+        st.error(f"Error loading documents: {str(e)}")
+    
+    # Show current document chat if active (only after document selection)
+    if ("current_conversation_id" in st.session_state and 
+        st.session_state.current_conversation_id and 
+        st.session_state.get("current_page") == "document_chat" and
+        st.session_state.get("conversation_type") == "document"):
+        st.markdown("---")
         show_chat_interface()
 
 
 def show_chat_interface():
     """Show the actual chat interface."""
-    st.subheader("💬 Chat Interface")
-    
     # Get conversation details
     conversation_id = st.session_state.current_conversation_id
     
     # Load conversation messages if not already loaded
     if "chat_messages" not in st.session_state or not st.session_state.chat_messages:
         load_conversation_messages(conversation_id)
-    
-    # Display conversation info
-    col1, col2, col3 = st.columns([2, 1, 1])
-    with col1:
-        st.info(f"💬 **Active Conversation:** {conversation_id[:8]}...")
-    with col2:
-        st.success("🟢 Online")
-    with col3:
-        if st.button("📊 View Details"):
-            show_conversation_details(conversation_id)
     
     # Display messages
     if st.session_state.chat_messages:
@@ -368,19 +421,12 @@ def show_chat_interface():
                     <strong>🤖 AI:</strong> {message["content"]}
                 </div>
                 """, unsafe_allow_html=True)
-    else:
-        st.info("💬 Start the conversation by typing a message below!")
-        st.markdown("""
-        <div style="text-align: center; padding: 2rem; color: #666;">
-            <h3>🚀 Ready to Chat!</h3>
-            <p>Ask me anything about your uploaded documents. I'll search through all your content to provide accurate answers.</p>
-        </div>
-        """, unsafe_allow_html=True)
     
-    # Chat input
-    user_input = st.text_input("Type your message:", key="chat_input")
+    # Chat input - use a dynamic key to ensure it clears
+    input_key = f"chat_input_{conversation_id}"
+    user_input = st.text_input("Type your message:", key=input_key)
     
-    col1, col2, col3 = st.columns([1, 1, 3])
+    col1, col2 = st.columns([1, 1])
     
     with col1:
         if st.button("Send", type="primary"):
@@ -392,27 +438,14 @@ def show_chat_interface():
         if st.button("End Chat"):
             end_current_chat()
             st.rerun()
-    
-    with col3:
-        if st.button("🔄 Refresh Messages"):
-            load_conversation_messages(conversation_id)
-            st.rerun()
 
 
 def show_chat_history_page():
     """Show chat history page."""
-    st.title("💬 Chats")
     
-    # Get user info
+    # Chat history
     try:
         from utils.api_client import api_client
-        user_data = api_client.get_current_user()
-        
-        st.info(f"👤 **Logged in as:** {user_data.get('name', user_data.get('email', 'Unknown'))}")
-        
-        # Chat history
-        st.markdown("---")
-        st.subheader("💬 Your Conversations")
         
         # Get chat history
         try:
@@ -424,37 +457,26 @@ def show_chat_history_page():
             
             # Display conversations
             for i, conversation in enumerate(chat_history):
-                with st.expander(f"💬 {conversation.get('title', 'Untitled Conversation')} - {conversation.get('created_at', 'Unknown date')[:10]}"):
-                    col1, col2, col3 = st.columns([2, 1, 1])
-                    
-                    with col1:
-                        st.write(f"**Messages:** {conversation.get('message_count', 0)}")
-                        st.write(f"**Created:** {conversation.get('created_at', 'Unknown')}")
-                    
-                    with col2:
-                        if st.button(f"📖 View", key=f"view_{conversation['id']}"):
-                            view_conversation(conversation['id'])
-                    
-                    with col3:
-                        if st.button(f"🗑️ Delete", key=f"delete_{conversation['id']}"):
-                            delete_conversation(conversation['id'])
-                    
-                    # Show recent messages preview
-                    st.write("**Recent Messages Preview:**")
-                    try:
-                        conv_details = api_client.get_conversation(conversation['id'])
-                        messages = conv_details.get('messages', [])
-                        if messages:
-                            for msg in messages[-3:]:  # Show last 3 messages
-                                role = "👤 You" if msg.get('role') == 'user' else "🤖 AI"
-                                content = msg.get('content', '')[:100]
-                                if len(msg.get('content', '')) > 100:
-                                    content += "..."
-                                st.write(f"{role}: {content}")
-                        else:
-                            st.write("No messages in this conversation.")
-                    except Exception as e:
-                        st.write(f"Error loading messages: {str(e)}")
+                # Create simple title
+                title = conversation.get('title', 'Untitled Conversation')
+                display_title = f"💬 {title}"
+                
+                # Simple conversation card
+                col1, col2, col3 = st.columns([3, 1, 1])
+                
+                with col1:
+                    st.write(f"**{display_title}**")
+                    st.caption(f"Created: {conversation.get('created_at', 'Unknown')[:10]} • Messages: {conversation.get('message_count', 0)}")
+                
+                with col2:
+                    if st.button(f"📖 View", key=f"view_{conversation['id']}"):
+                        view_conversation(conversation['id'])
+                
+                with col3:
+                    if st.button(f"🗑️ Delete", key=f"delete_{conversation['id']}"):
+                        delete_conversation(conversation['id'])
+                
+                st.markdown("---")
         
         except Exception as e:
             st.error(f"Error loading chat history: {str(e)}")
@@ -470,6 +492,7 @@ def view_conversation(conversation_id: str):
         conversation = api_client.get_conversation(conversation_id)
         
         st.session_state.current_conversation_id = conversation_id
+        st.session_state.conversation_type = conversation.get("chat_type", "universal")
         st.session_state.chat_messages = []
         
         # Load messages
@@ -480,8 +503,11 @@ def view_conversation(conversation_id: str):
                 "content": msg["content"]
             })
         
-        # Switch to chat page
-        st.session_state.current_page = "universal_chat"
+        # Switch to appropriate chat page based on conversation type
+        if conversation.get("chat_type") == "document":
+            st.session_state.current_page = "document_chat"
+        else:
+            st.session_state.current_page = "universal_chat"
         st.rerun()
         
     except Exception as e:
@@ -532,7 +558,6 @@ def show_conversation_details(conversation_id: str):
 
 def show_profile_page():
     """Show user profile page with statistics."""
-    st.title("👤 User Profile")
     
     try:
         from utils.api_client import api_client
@@ -641,10 +666,25 @@ def start_new_conversation():
         from utils.api_client import api_client
         result = api_client.start_conversation()
         st.session_state.current_conversation_id = result["conversation_id"]
+        st.session_state.conversation_type = "universal"  # Set conversation type
         st.session_state.chat_messages = []
         st.success("New conversation started!")
     except Exception as e:
         st.error(f"Failed to start conversation: {str(e)}")
+
+
+def start_document_conversation(document_ids: list):
+    """Start a new document-scoped conversation."""
+    try:
+        from utils.api_client import api_client
+        result = api_client.start_document_conversation(document_ids)
+        st.session_state.current_conversation_id = result["conversation_id"]
+        st.session_state.conversation_type = "document"  # Set conversation type
+        st.session_state.chat_messages = []
+        st.success(f"Document chat started with {len(document_ids)} document(s)!")
+        st.rerun()
+    except Exception as e:
+        st.error(f"Failed to start document conversation: {str(e)}")
 
 
 def load_conversation_messages(conversation_id: str):
@@ -691,8 +731,8 @@ def send_message(message: str):
                 "content": response["message"]
             })
         
-        # Clear the input
-        st.session_state.chat_input = ""
+        # Clear the input field by rerunning
+        st.rerun()
         
     except Exception as e:
         st.error(f"Failed to send message: {str(e)}")
@@ -704,6 +744,7 @@ def send_message(message: str):
 def end_current_chat():
     """End the current chat session."""
     st.session_state.current_conversation_id = None
+    st.session_state.conversation_type = None
     st.session_state.chat_messages = []
     st.success("Chat session ended!")
 
@@ -719,6 +760,8 @@ def logout_user():
         del st.session_state.user_id
     if "current_conversation_id" in st.session_state:
         del st.session_state.current_conversation_id
+    if "conversation_type" in st.session_state:
+        del st.session_state.conversation_type
     if "chat_messages" in st.session_state:
         del st.session_state.chat_messages
     if "user_documents" in st.session_state:

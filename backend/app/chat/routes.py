@@ -4,7 +4,8 @@ import logging
 from app.schemas.chat import (
     MessageIn, MessageOut, ConversationHistory, 
     ConversationStartResponse, ChatQueryResponse, 
-    ConversationDetailResponse
+    ConversationDetailResponse, DocumentChatStartRequest,
+    DocumentChatStartResponse, DocumentInfo
 )
 from app.chat.service import openai_chat_service
 from app.chat.conversation_service import conversation_service
@@ -282,4 +283,98 @@ async def test_chat(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to process test query"
+        )
+
+
+# Document Chat Endpoints
+@router.post("/start-document", response_model=DocumentChatStartResponse)
+async def start_document_chat(
+    request: DocumentChatStartRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Start a new document-scoped conversation."""
+    try:
+        result = await conversation_service.start_document_conversation(
+            user_id=str(current_user.id),
+            document_ids=request.document_ids,
+            title=request.title
+        )
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to start document conversation: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start document conversation"
+        )
+
+
+@router.get("/documents/selectable", response_model=List[DocumentInfo])
+async def get_selectable_documents(
+    current_user: User = Depends(get_current_user)
+):
+    """Get list of documents available for document chat."""
+    try:
+        from app.db.mongodb_models import Document
+        from app.vector.vector_service import vector_service
+        
+        # Get user's documents
+        documents = await Document.find(
+            Document.user_id == str(current_user.id)
+        ).to_list()
+        
+        # Filter for completed documents
+        documents = [doc for doc in documents if doc.processing_status == "completed"]
+        
+        # Get actual document IDs from Pinecone by searching for vectors
+        # This ensures we use the correct IDs that are stored in Pinecone
+        pinecone_doc_ids = set()
+        try:
+            # Search for vectors to get the actual document IDs stored in Pinecone
+            search_results = await vector_service.search_similar_content(
+                query="",  # Empty query to get all vectors
+                user_id=str(current_user.id),
+                top_k=1000  # Large number to get all vectors
+            )
+            
+            for result in search_results:
+                doc_id = result['metadata'].get('document_id')
+                if doc_id:
+                    pinecone_doc_ids.add(doc_id)
+        except Exception as e:
+            logger.warning(f"Failed to get Pinecone document IDs: {e}")
+        
+        # Convert to DocumentInfo format
+        document_infos = []
+        for doc in documents:
+            # Try to find matching Pinecone document ID
+            pinecone_id = None
+            for pinecone_doc_id in pinecone_doc_ids:
+                # Check if this document matches by filename
+                if any(result['metadata'].get('filename') == doc.original_filename 
+                      for result in search_results 
+                      if result['metadata'].get('document_id') == pinecone_doc_id):
+                    pinecone_id = pinecone_doc_id
+                    break
+            
+            # Use Pinecone ID if found, otherwise use MongoDB ID
+            document_id = pinecone_id if pinecone_id else str(doc.id)
+            
+            document_infos.append(DocumentInfo(
+                id=document_id,
+                filename=doc.filename,
+                original_filename=doc.original_filename,
+                file_type=doc.file_type,
+                file_size=doc.file_size,
+                upload_timestamp=doc.upload_timestamp,
+                is_available=True
+            ))
+        
+        return document_infos
+        
+    except Exception as e:
+        logger.error(f"Failed to get selectable documents: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve documents"
         )
