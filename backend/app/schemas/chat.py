@@ -16,6 +16,9 @@ class MessageResponse(MessageBase):
     id: str
     conversation_id: str
     timestamp: datetime
+    sources: Optional[List[dict]] = None
+    response_time: Optional[float] = None
+    token_count: Optional[int] = None
     metadata: Optional[dict] = None
 
 
@@ -32,8 +35,9 @@ class ConversationResponse(ConversationBase):
     user_id: str
     created_at: datetime
     updated_at: datetime
-    is_active: bool
-    message_count: Optional[int] = None
+    last_message_at: Optional[datetime] = None
+    message_count: int = 0
+    is_active: bool = True
 
 
 class ChatQuery(BaseModel):
@@ -70,4 +74,35 @@ class ConversationHistory(BaseModel):
     id: str
     title: str
     created_at: datetime
+    last_message_at: Optional[datetime] = None
     message_count: int
+
+
+class ConversationStartResponse(BaseModel):
+    """Response when starting a new conversation."""
+    conversation_id: str
+    title: str
+    created_at: datetime
+
+
+class ChatQueryResponse(BaseModel):
+    """Enhanced response for chat queries."""
+    message: str
+    conversation_id: str
+    sources: Optional[List[dict]] = None
+    response_time: float
+    token_count: Optional[int] = None
+    timestamp: datetime
+
+
+class ConversationDetailResponse(BaseModel):
+    """Detailed conversation with messages."""
+    id: str
+    title: str
+    user_id: str
+    created_at: datetime
+    updated_at: datetime
+    last_message_at: Optional[datetime] = None
+    message_count: int
+    is_active: bool
+    messages: List[MessageResponse]

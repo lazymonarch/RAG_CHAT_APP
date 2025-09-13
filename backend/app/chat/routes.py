@@ -1,8 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 import logging
-from app.schemas.chat import MessageIn, MessageOut, ConversationHistory
+from app.schemas.chat import (
+    MessageIn, MessageOut, ConversationHistory, 
+    ConversationStartResponse, ChatQueryResponse, 
+    ConversationDetailResponse
+)
 from app.chat.service import openai_chat_service
+from app.chat.conversation_service import conversation_service
 from app.vector.vector_service import vector_service
 from app.dependencies import get_current_user
 from app.db.mongodb_models import User, Conversation, Message
@@ -154,6 +159,103 @@ async def get_conversation(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve conversation"
+        )
+
+
+@router.post("/start", response_model=ConversationStartResponse)
+async def start_conversation(
+    current_user: User = Depends(get_current_user)
+):
+    """Start a new conversation."""
+    try:
+        result = await conversation_service.start_conversation(str(current_user.id))
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to start conversation: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start conversation"
+        )
+
+
+@router.post("/{conversation_id}/query", response_model=ChatQueryResponse)
+async def send_message(
+    conversation_id: str,
+    message: MessageIn,
+    current_user: User = Depends(get_current_user)
+):
+    """Send a message to a conversation."""
+    try:
+        result = await conversation_service.send_message(
+            conversation_id=conversation_id,
+            user_message=message.content,
+            user_id=str(current_user.id)
+        )
+        return result
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Failed to send message: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send message"
+        )
+
+
+@router.get("/{conversation_id}", response_model=ConversationDetailResponse)
+async def get_conversation_detail(
+    conversation_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get a conversation with all its messages."""
+    try:
+        result = await conversation_service.get_conversation(
+            conversation_id=conversation_id,
+            user_id=str(current_user.id)
+        )
+        return result
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Failed to get conversation: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get conversation"
+        )
+
+
+@router.delete("/{conversation_id}")
+async def delete_conversation(
+    conversation_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a conversation and all its messages."""
+    try:
+        result = await conversation_service.delete_conversation(
+            conversation_id=conversation_id,
+            user_id=str(current_user.id)
+        )
+        return {"success": result}
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Failed to delete conversation: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete conversation"
         )
 
 

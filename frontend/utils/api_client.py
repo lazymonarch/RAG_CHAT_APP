@@ -127,14 +127,23 @@ class APIClient:
         return self._handle_response(response)
     
     # Chat Methods
-    def send_message(self, message: str) -> Dict[str, Any]:
-        """Send chat message."""
+    def start_conversation(self) -> Dict[str, Any]:
+        """Start a new conversation."""
+        response = self.session.post(
+            f"{self.base_url}/chat/start",
+            headers=self._get_headers()
+        )
+        
+        return self._handle_response(response)
+    
+    def send_message(self, conversation_id: str, message: str) -> Dict[str, Any]:
+        """Send message to a conversation."""
         data = {
             "content": message
         }
         
         response = self.session.post(
-            CHAT_ENDPOINTS["query"],
+            f"{self.base_url}/chat/{conversation_id}/query",
             json=data,
             headers=self._get_headers()
         )
@@ -144,16 +153,25 @@ class APIClient:
     def get_chat_history(self) -> List[Dict[str, Any]]:
         """Get chat history."""
         response = self.session.get(
-            CHAT_ENDPOINTS["history"],
+            f"{self.base_url}/chat/history",
             headers=self._get_headers()
         )
         
         return self._handle_response(response)
     
     def get_conversation(self, conversation_id: str) -> Dict[str, Any]:
-        """Get specific conversation."""
+        """Get specific conversation with messages."""
         response = self.session.get(
-            f"{CHAT_ENDPOINTS['conversation']}{conversation_id}",
+            f"{self.base_url}/chat/{conversation_id}",
+            headers=self._get_headers()
+        )
+        
+        return self._handle_response(response)
+    
+    def delete_conversation(self, conversation_id: str) -> Dict[str, Any]:
+        """Delete a conversation."""
+        response = self.session.delete(
+            f"{self.base_url}/chat/{conversation_id}",
             headers=self._get_headers()
         )
         
@@ -166,8 +184,18 @@ class APIClient:
         }
         
         response = self.session.post(
-            CHAT_ENDPOINTS["test"],
+            f"{self.base_url}/chat/test",
             json=data,
+            headers=self._get_headers()
+        )
+        
+        return self._handle_response(response)
+    
+    # Profile Methods
+    def get_user_profile(self) -> Dict[str, Any]:
+        """Get user profile with statistics."""
+        response = self.session.get(
+            f"{self.base_url}/users/me/profile",
             headers=self._get_headers()
         )
         

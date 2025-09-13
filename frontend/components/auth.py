@@ -94,11 +94,6 @@ def user_info():
             # Display name or email as fallback
             display_name = user_data.get('name') or user_data.get('email', 'User')
             st.info(f"👤 Logged in as: {display_name}")
-            
-            # Show detailed information
-            st.write(f"**Email:** {user_data.get('email', 'N/A')}")
-            st.write(f"**Role:** {user_data.get('role', 'User')}")
-            st.write(f"**User ID:** {user_data.get('id', 'N/A')}")
         except Exception as e:
             st.warning(f"Could not fetch user details: {str(e)}")
             # Fallback to email if API fails

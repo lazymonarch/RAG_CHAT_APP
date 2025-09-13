@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from app.schemas.user import UserCreate, UserResponse, UserUpdate, AdminUserCreate, AdminCreateResponse
+from app.schemas.user import UserCreate, UserResponse, UserUpdate, AdminUserCreate, AdminCreateResponse, UserProfileResponse
 from app.db.mongodb_models import User, UserRole
 from app.core.security import get_password_hash, create_access_token
 from app.core.config import settings
 from app.dependencies import get_current_user, require_admin, get_current_user_response
-from datetime import timedelta
+from app.users.profile_service import profile_service
+from datetime import timedelta, datetime
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -222,6 +223,41 @@ async def update_my_profile(user_data: UserUpdate, current_user: User = Depends(
         created_at=current_user.created_at,
         updated_at=current_user.updated_at
     )
+
+
+@router.get("/me/profile", response_model=UserProfileResponse)
+async def get_my_profile(current_user: User = Depends(get_current_user)):
+    """Get current user's comprehensive profile with statistics."""
+    try:
+        return await profile_service.get_user_profile(str(current_user.id))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve profile"
+        )
+
+
+@router.put("/me/profile", response_model=UserProfileResponse)
+async def update_my_profile(user_data: UserUpdate, current_user: User = Depends(get_current_user)):
+    """Update current user's profile."""
+    try:
+        # Update fields if provided
+        if user_data.email:
+            current_user.email = user_data.email
+        if user_data.password:
+            current_user.hashed_password = get_password_hash(user_data.password)
+        if user_data.name:
+            current_user.name = user_data.name
+        
+        current_user.updated_at = datetime.utcnow()
+        await current_user.save()
+        
+        return await profile_service.get_user_profile(str(current_user.id))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update profile"
+        )
 
 
 @router.delete("/me/profile")
