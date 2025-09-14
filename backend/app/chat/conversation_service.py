@@ -211,7 +211,15 @@ class ConversationService:
         try:
             # Get conversation
             conversation = await Conversation.get(conversation_id)
-            if not conversation or conversation.user_id != user_id:
+            if not conversation:
+                logger.warning(f"Conversation {conversation_id} not found")
+                raise ValueError("Conversation not found")
+            
+            # Debug logging
+            logger.info(f"Conversation {conversation_id} found. User ID in conversation: {conversation.user_id}, Requested user ID: {user_id}")
+            
+            if conversation.user_id != user_id:
+                logger.warning(f"Access denied: conversation user_id ({conversation.user_id}) != requested user_id ({user_id})")
                 raise ValueError("Conversation not found or access denied")
             
             # Get messages

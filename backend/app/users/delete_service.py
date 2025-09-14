@@ -92,9 +92,13 @@ class UserDeleteService:
             # 3. Delete all vectors from Pinecone
             try:
                 await self.pinecone.initialize()
-                pinecone_stats = await self._delete_user_vectors_from_pinecone(user_id)
-                deletion_stats["deleted_items"]["pinecone_vectors"] = pinecone_stats.get("deleted_vectors", 0)
-                logger.info(f"Deleted {pinecone_stats.get('deleted_vectors', 0)} vectors from Pinecone")
+                if self.pinecone.index:
+                    pinecone_stats = await self._delete_user_vectors_from_pinecone(user_id)
+                    deletion_stats["deleted_items"]["pinecone_vectors"] = pinecone_stats.get("deleted_vectors", 0)
+                    logger.info(f"Deleted {pinecone_stats.get('deleted_vectors', 0)} vectors from Pinecone")
+                else:
+                    logger.warning("Pinecone index not available - skipping vector deletion")
+                    deletion_stats["pinecone_warning"] = "Pinecone index not available"
             except Exception as e:
                 logger.warning(f"Failed to delete Pinecone vectors: {e}")
                 deletion_stats["pinecone_warning"] = f"Pinecone cleanup failed: {str(e)}"
@@ -130,6 +134,8 @@ class UserDeleteService:
         try:
             # Get the Pinecone index
             index = self.pinecone.index
+            if not index:
+                return {"deleted_vectors": 0, "error": "Pinecone index not available"}
             
             # Search for all vectors belonging to this user
             # We'll use a broad search to find all user vectors

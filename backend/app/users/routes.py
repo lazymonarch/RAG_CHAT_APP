@@ -196,38 +196,6 @@ async def create_admin(admin_data: AdminUserCreate):
     )
 
 
-@router.get("/me/profile", response_model=UserResponse)
-async def get_my_profile(current_user: User = Depends(get_current_user)):
-    """Get current user's profile."""
-    return UserResponse(
-        id=str(current_user.id),
-        email=current_user.email,
-        role=current_user.role,
-        created_at=current_user.created_at,
-        updated_at=current_user.updated_at
-    )
-
-
-@router.put("/me/profile", response_model=UserResponse)
-async def update_my_profile(user_data: UserUpdate, current_user: User = Depends(get_current_user)):
-    """Update current user's profile."""
-    # Update fields if provided
-    if user_data.email:
-        current_user.email = user_data.email
-    if user_data.password:
-        current_user.hashed_password = get_password_hash(user_data.password)
-    
-    await current_user.save()
-    
-    return UserResponse(
-        id=str(current_user.id),
-        email=current_user.email,
-        role=current_user.role,
-        created_at=current_user.created_at,
-        updated_at=current_user.updated_at
-    )
-
-
 @router.get("/me/profile", response_model=UserProfileResponse)
 async def get_my_profile(current_user: User = Depends(get_current_user)):
     """Get current user's comprehensive profile with statistics."""

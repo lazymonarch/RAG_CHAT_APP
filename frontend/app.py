@@ -60,11 +60,13 @@ def main():
         background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
         border-left-color: #2196f3;
         margin-left: 20%;
+        color: #000000;
     }
     .assistant-message {
         background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
         border-left-color: #9c27b0;
         margin-right: 20%;
+        color: #000000;
     }
     .metric-card {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -228,6 +230,17 @@ def show_main_app():
     
     # Left Sidebar with 3 main sections
     with st.sidebar:
+        # User Greeting - at the top
+        try:
+            from utils.api_client import api_client
+            user_data = api_client.get_user_profile()
+            user_name = user_data.get('name', 'User')
+            st.markdown(f"### 👋 Hi {user_name}")
+        except:
+            st.markdown("### 👋 Hi User")
+        
+        st.markdown("---")
+        
         # Back button - smart navigation
         if st.button("← Back", use_container_width=True, type="secondary"):
             current_page = st.session_state.get("current_page", "universal_chat")
@@ -422,9 +435,19 @@ def show_chat_interface():
                 </div>
                 """, unsafe_allow_html=True)
     
-    # Chat input - use a dynamic key to ensure it clears
+    # Chat input - use session state to manage input clearing
     input_key = f"chat_input_{conversation_id}"
-    user_input = st.text_input("Type your message:", key=input_key)
+    
+    # Initialize input state if not exists
+    if f"input_cleared_{conversation_id}" not in st.session_state:
+        st.session_state[f"input_cleared_{conversation_id}"] = False
+    
+    # Clear input if needed
+    if st.session_state[f"input_cleared_{conversation_id}"]:
+        user_input = st.text_input("Type your message:", key=input_key, value="")
+        st.session_state[f"input_cleared_{conversation_id}"] = False
+    else:
+        user_input = st.text_input("Type your message:", key=input_key)
     
     col1, col2, col3 = st.columns([1, 1, 1])
     
@@ -432,6 +455,8 @@ def show_chat_interface():
         if st.button("Send", type="primary"):
             if user_input:
                 send_message(user_input)
+                # Mark input for clearing on next render
+                st.session_state[f"input_cleared_{conversation_id}"] = True
                 st.rerun()
     
     with col2:
@@ -459,8 +484,18 @@ def show_chat_history_page():
                 st.info("No chat history available. Start a conversation in the Chat section!")
                 return
             
+            # Filter out conversations with 0 messages
+            conversations_with_messages = [
+                conv for conv in chat_history 
+                if conv.get('message_count', 0) > 0
+            ]
+            
+            if not conversations_with_messages:
+                st.info("No conversations with messages found. Start chatting to see your history here!")
+                return
+            
             # Display conversations
-            for i, conversation in enumerate(chat_history):
+            for i, conversation in enumerate(conversations_with_messages):
                 # Create simple title
                 title = conversation.get('title', 'Untitled Conversation')
                 display_title = f"💬 {title}"
@@ -748,8 +783,12 @@ def load_conversation_messages(conversation_id: str):
             })
             
     except Exception as e:
-        st.error(f"Failed to load conversation messages: {str(e)}")
-        st.session_state.chat_messages = []
+        # If conversation doesn't exist or has no messages, initialize empty
+        if "not found" in str(e).lower() or "404" in str(e):
+            st.session_state.chat_messages = []
+        else:
+            st.error(f"Failed to load conversation messages: {str(e)}")
+            st.session_state.chat_messages = []
 
 
 def send_message(message: str):
@@ -769,14 +808,11 @@ def send_message(message: str):
             # Send to backend
             response = api_client.send_message(conversation_id, message)
             
-            # Add assistant response to session state
-            st.session_state.chat_messages.append({
-                "role": "assistant",
-                "content": response["message"]
-            })
-        
-        # Clear the input field by rerunning
-        st.rerun()
+        # Add assistant response to session state
+        st.session_state.chat_messages.append({
+            "role": "assistant",
+            "content": response["message"]
+        })
         
     except Exception as e:
         st.error(f"Failed to send message: {str(e)}")

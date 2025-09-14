@@ -108,7 +108,7 @@ async def send_chat_summary_email(
         # Create email body with the new structured format
         if summary:
             # Parse the AI-generated summary to extract structured information
-            structured_summary = await self._parse_summary_for_template(summary, chat_title)
+            structured_summary = await _parse_summary_for_template(summary, chat_title)
             
             body = f"""Hi {name},
 

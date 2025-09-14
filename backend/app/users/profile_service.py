@@ -28,7 +28,14 @@ class ProfileService:
             # Get total messages across all conversations
             conversations = await Conversation.find(Conversation.user_id == user_id).to_list()
             conversation_ids = [str(conv.id) for conv in conversations]
-            message_count = await Message.find(Message.conversation_id.in_(conversation_ids)).count()
+            
+            # Count messages for each conversation
+            message_count = 0
+            for conv_id in conversation_ids:
+                conv_message_count = await Message.find(Message.conversation_id == conv_id).count()
+                message_count += conv_message_count
+            
+            logger.info(f"Profile stats for user {user_id}: docs={doc_count}, chats={chat_count}, messages={message_count}")
             
             # Calculate storage used
             documents = await Document.find(Document.user_id == user_id).to_list()
@@ -39,7 +46,7 @@ class ProfileService:
             
             return UserProfileResponse(
                 id=str(user.id),
-                name=user.name,
+                name=user.name or "Not Set",
                 email=user.email,
                 created_at=user.created_at,
                 last_login=user.last_login,
