@@ -700,7 +700,7 @@ def show_profile_page():
         
         # Delete Profile Confirmation Dialog
         if st.session_state.get("show_delete_confirmation", False):
-    st.markdown("---")
+            st.markdown("---")
             st.error("⚠️ **DANGER ZONE**")
             st.warning("""
             **This action cannot be undone!**
