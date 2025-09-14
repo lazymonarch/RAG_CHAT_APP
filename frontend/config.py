@@ -50,6 +50,5 @@ DOCUMENT_ENDPOINTS = {
 CHAT_ENDPOINTS = {
     "query": f"{API_BASE_URL}/chat/query",
     "history": f"{API_BASE_URL}/chat/history",
-    "conversation": f"{API_BASE_URL}/chat/conversation/",
-    "test": f"{API_BASE_URL}/chat/test"
+    "conversation": f"{API_BASE_URL}/chat/conversation/"
 }

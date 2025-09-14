@@ -1,7 +1,10 @@
 """
 API Client for communicating with FastAPI backend
 """
+import os
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import streamlit as st
 from typing import Dict, List, Optional, Any
 from config import (
@@ -14,8 +17,28 @@ class APIClient:
     """Client for communicating with the FastAPI backend."""
     
     def __init__(self):
-        self.base_url = "http://localhost:8000"
+        self.base_url = os.getenv("BACKEND_URL", "http://localhost:8000")
         self.session = requests.Session()
+        
+        # Configure retry strategy
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=0.1,
+            status_forcelist=[429, 500, 502, 503, 504],
+        )
+        
+        # Configure adapter with connection pooling
+        adapter = HTTPAdapter(
+            max_retries=retry_strategy,
+            pool_connections=10,
+            pool_maxsize=20
+        )
+        
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+        
+        # Set timeouts
+        self.session.timeout = (5, 30)  # (connect timeout, read timeout)
         
     def _get_headers(self, include_auth: bool = True) -> Dict[str, str]:
         """Get request headers with optional authentication."""
@@ -56,7 +79,8 @@ class APIClient:
         response = self.session.post(
             AUTH_ENDPOINTS["login"],
             json=data,
-            headers=self._get_headers(include_auth=False)
+            headers=self._get_headers(include_auth=False),
+            timeout=self.session.timeout
         )
         
         return self._handle_response(response)
@@ -176,19 +200,7 @@ class APIClient:
         
         return self._handle_response(response)
     
-    def test_chat(self, message: str) -> Dict[str, Any]:
-        """Test chat without RAG."""
-        data = {
-            "content": message
-        }
-        
-        response = self.session.post(
-            f"{self.base_url}/chat/test",
-            json=data,
-            headers=self._get_headers()
-        )
-        
-        return self._handle_response(response)
+    # Test chat method removed for production
     
     # Profile Methods
     def get_user_profile(self) -> Dict[str, Any]:

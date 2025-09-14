@@ -214,7 +214,7 @@ class ConversationService:
                 logger.warning(f"Conversation {conversation_id} not found")
                 raise ValueError("Conversation not found")
             
-            # Debug logging
+            # Verify user access
             logger.info(f"Conversation {conversation_id} found. User ID in conversation: {conversation.user_id}, Requested user ID: {user_id}")
             
             if conversation.user_id != user_id:
@@ -255,13 +255,13 @@ class ConversationService:
             logger.error(f"Failed to get conversation: {e}")
             raise
     
-    async def get_user_conversations(self, user_id: str) -> List[Dict[str, Any]]:
-        """Get all conversations for a user."""
+    async def get_user_conversations(self, user_id: str, limit: int = 20, skip: int = 0) -> List[Dict[str, Any]]:
+        """Get conversations for a user with pagination."""
         try:
             conversations = await Conversation.find(
                 Conversation.user_id == user_id,
                 Conversation.is_active == True
-            ).sort("-last_message_at").to_list()
+            ).sort("-last_message_at").skip(skip).limit(limit).to_list()
             
             conversation_list = []
             for conv in conversations:

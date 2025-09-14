@@ -86,37 +86,7 @@ Please provide a clear and accurate answer based only on the context above."""
             logger.error(f"Failed to generate response: {e}")
             raise
     
-    async def generate_simple_response(self, query: str) -> Dict[str, Any]:
-        """Generate a simple response without context (for testing)."""
-        try:
-            if not self.client:
-                await self.initialize()
-            
-            response = await self.client.chat.completions.create(
-                model=self.llm_model,
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": query}
-                ],
-                max_tokens=settings.MAX_OUTPUT_TOKENS,
-                temperature=settings.TEMPERATURE
-            )
-            
-            answer = response.choices[0].message.content
-            usage = response.usage
-            
-            return {
-                "response": answer,
-                "usage": {
-                    "prompt_tokens": usage.prompt_tokens,
-                    "completion_tokens": usage.completion_tokens,
-                    "total_tokens": usage.total_tokens
-                }
-            }
-            
-        except Exception as e:
-            logger.error(f"Failed to generate simple response: {e}")
-            raise
+    # Simple response method removed for production
 
 
 # Global chat service instance

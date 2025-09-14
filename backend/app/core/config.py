@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # Project Configuration
     PROJECT_NAME: str = "RAG Chat Application"
     VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = False
     
     # MongoDB Configuration
     MONGODB_URL: str

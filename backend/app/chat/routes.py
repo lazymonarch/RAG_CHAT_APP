@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 import logging
+import hashlib
+import time
 from app.schemas.chat import (
     MessageIn, MessageOut, ConversationHistory, 
     ConversationStartResponse, ChatQueryResponse, 
@@ -18,6 +20,10 @@ from app.core.config import settings
 router = APIRouter(prefix="/chat", tags=["chat"])
 logger = logging.getLogger(__name__)
 
+# Simple in-memory cache for responses (in production, use Redis)
+response_cache = {}
+CACHE_TTL = 300  # 5 minutes
+
 
 @router.post("/query", response_model=MessageOut)
 async def chat_query(
@@ -26,11 +32,25 @@ async def chat_query(
 ):
     """Process a chat query with RAG."""
     try:
-        # Initialize services if needed
-        await vector_service.initialize()
-        await openai_chat_service.initialize()
+        # Check cache first
+        cache_key = hashlib.md5(f"{message.content}_{current_user.id}".encode()).hexdigest()
+        current_time = time.time()
         
-        # Search for relevant content
+        if cache_key in response_cache:
+            cached_data, timestamp = response_cache[cache_key]
+            if current_time - timestamp < CACHE_TTL:
+                logger.info(f"Cache hit for query: {message.content[:50]}...")
+                return MessageOut(
+                    id=cached_data["id"],
+                    content=cached_data["content"],
+                    role=cached_data["role"],
+                    conversation_id=cached_data["conversation_id"],
+                    timestamp=cached_data["timestamp"],
+                    sources=cached_data.get("sources"),
+                    response_time=cached_data.get("response_time")
+                )
+        
+        # Search for relevant content (services already initialized at startup)
         search_results = await vector_service.search_similar_content(
             query=message.content,
             user_id=str(current_user.id),
@@ -69,6 +89,18 @@ async def chat_query(
         )
         await assistant_message.insert()
         
+        # Cache the response
+        response_data_cache = {
+            "id": str(assistant_message.id),
+            "content": response_data["response"],
+            "role": "assistant",
+            "conversation_id": str(conversation.id),
+            "timestamp": assistant_message.timestamp,
+            "sources": response_data.get("sources"),
+            "response_time": response_data.get("response_time")
+        }
+        response_cache[cache_key] = (response_data_cache, current_time)
+        
         return MessageOut(
             id=str(assistant_message.id),
             role="assistant",
@@ -87,26 +119,28 @@ async def chat_query(
 
 @router.get("/history", response_model=List[ConversationHistory])
 async def get_chat_history(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    limit: int = 20,
+    skip: int = 0
 ):
-    """Get chat history for the current user."""
+    """Get chat history for the current user with pagination."""
     try:
-        conversations = await Conversation.find(
-            Conversation.user_id == str(current_user.id)
-        ).to_list()
+        # Use conversation service for optimized queries
+        conversations = await conversation_service.get_user_conversations(
+            user_id=str(current_user.id),
+            limit=limit,
+            skip=skip
+        )
         
         history = []
         for conv in conversations:
-            # Get messages for this conversation
-            messages = await Message.find(
-                Message.conversation_id == str(conv.id)
-            ).to_list()
-            
             history.append(ConversationHistory(
-                id=str(conv.id),
-                title=conv.title,
-                created_at=conv.created_at,
-                message_count=len(messages)
+                id=conv["id"],
+                title=conv["title"],
+                created_at=conv["created_at"],
+                last_message_at=conv["last_message_at"],
+                message_count=conv["message_count"],
+                is_active=True  # Only active conversations are returned
             ))
         
         return history
@@ -261,30 +295,7 @@ async def delete_conversation(
         )
 
 
-@router.post("/test")
-async def test_chat(
-    message: MessageIn,
-    current_user: User = Depends(get_current_user)
-):
-    """Test OpenAI chat without RAG (simple response)."""
-    try:
-        await openai_chat_service.initialize()
-        
-        response_data = await openai_chat_service.generate_simple_response(
-            query=message.content
-        )
-        
-        return {
-            "response": response_data["response"],
-            "usage": response_data["usage"]
-        }
-        
-    except Exception as e:
-        logger.error(f"Test chat failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process test query"
-        )
+# Test endpoint removed for production
 
 
 # Document Chat Endpoints

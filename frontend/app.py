@@ -4,7 +4,7 @@ RAG Chat Application - Streamlit Frontend
 import streamlit as st
 from config import APP_TITLE, APP_ICON, APP_LAYOUT, APP_SIDEBAR_STATE
 from components.auth import (
-    login_form, register_form, logout_button, user_info, 
+    login_form, register_form, logout_button, 
     is_authenticated, show_register
 )
 from components.documents import document_upload, document_list, document_stats
@@ -172,9 +172,7 @@ def main():
                 register_form()
             else:
                 login_form()
-        else:
-            # User info only
-            user_info()
+        # User info removed - using greeting in sidebar instead
     
     # Main content
     if not is_authenticated():
