@@ -166,8 +166,13 @@ def main():
     with st.sidebar:
         # Authentication section
         if not is_authenticated():
-            st.title("🎛️ Control Panel")
-            st.markdown("---")
+            st.markdown("""
+            <div style="text-align: center; padding: 1rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        border-radius: 10px; margin-bottom: 1rem; color: white;">
+                <h2 style="color: white; margin: 0; font-size: 1.5rem;">🤖 RAG Chat App</h2>
+                <p style="color: #f0f0f0; margin: 0.5rem 0 0 0; font-size: 0.9rem;">Get Started</p>
+            </div>
+            """, unsafe_allow_html=True)
             if st.session_state.get("show_register", False):
                 register_form()
             else:
@@ -185,37 +190,125 @@ def main():
 
 def show_landing_page():
     """Show landing page for unauthenticated users."""
+    
+    # Hero Section
     st.markdown("""
-    ## Welcome to RAG Chat Application! 🤖
+    <div style="text-align: center; padding: 2rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                border-radius: 15px; margin-bottom: 2rem; color: white;">
+        <h1 style="color: white; font-size: 3rem; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🤖 RAG Chat App</h1>
+        <p style="color: #f0f0f0; font-size: 1.3rem; margin: 1rem 0; font-weight: 300;">Intelligent Document Chat with AI</p>
+        <p style="color: #e0e0e0; font-size: 1.1rem; margin: 0;">Upload documents • Ask questions • Get AI-powered answers</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    This application allows you to:
+    # Features Grid
+    col1, col2, col3 = st.columns(3)
     
-    ### 📄 Upload Documents
-    - Upload PDF, TXT, DOCX, or DOC files
-    - Documents are automatically processed and chunked
-    - Vector embeddings are created for semantic search
+    with col1:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1.5rem; 
+                    border-radius: 12px; border-left: 4px solid #28a745; margin-bottom: 1rem;">
+            <h3 style="color: #28a745; margin: 0 0 1rem 0;">📄 Smart Document Processing</h3>
+            <ul style="margin: 0; padding-left: 1.2rem; color: #333;">
+                <li>PDF, TXT, DOCX support</li>
+                <li>Intelligent text chunking</li>
+                <li>Vector embeddings</li>
+                <li>Semantic search ready</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
     
-    ### 💬 Chat with AI
-    - Ask questions about your uploaded documents
-    - Get answers based on document content (RAG)
-    - View conversation history
+    with col2:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1.5rem; 
+                    border-radius: 12px; border-left: 4px solid #007bff; margin-bottom: 1rem;">
+            <h3 style="color: #007bff; margin: 0 0 1rem 0;">💬 AI-Powered Chat</h3>
+            <ul style="margin: 0; padding-left: 1.2rem; color: #333;">
+                <li>RAG technology</li>
+                <li>Context-aware responses</li>
+                <li>Document-specific chat</li>
+                <li>Conversation history</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
     
-    ### 🔍 Features
-    - **RAG Technology**: Retrieval-Augmented Generation
-    - **Vector Search**: Semantic similarity search
-    - **Multiple Formats**: Support for various document types
-    - **User Management**: Secure authentication
-    - **Real-time Chat**: Interactive conversation interface
+    with col3:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1.5rem; 
+                    border-radius: 12px; border-left: 4px solid #6f42c1; margin-bottom: 1rem;">
+            <h3 style="color: #6f42c1; margin: 0 0 1rem 0;">🔒 Secure & Modern</h3>
+            <ul style="margin: 0; padding-left: 1.2rem; color: #333;">
+                <li>JWT authentication</li>
+                <li>User profiles</li>
+                <li>Data privacy</li>
+                <li>Real-time updates</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
     
-    ### 🚀 Getting Started
-    1. **Register** or **Login** using the sidebar
-    2. **Upload** your documents
-    3. **Start chatting** with the AI about your content!
+    # How It Works Section
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); padding: 2rem; 
+                border-radius: 15px; margin: 2rem 0; border-left: 5px solid #ffc107;">
+        <h2 style="color: #856404; margin: 0 0 1.5rem 0; text-align: center;">🚀 How It Works</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div style="text-align: center; flex: 1; min-width: 150px; margin: 0.5rem;">
+                <div style="background: white; border-radius: 50%; width: 60px; height: 60px; display: flex; 
+                            align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem;">1️⃣</div>
+                <h4 style="color: #856404; margin: 0;">Upload</h4>
+                <p style="color: #6c5ce7; margin: 0.5rem 0 0; font-size: 0.9rem;">Upload your documents</p>
+            </div>
+            <div style="text-align: center; flex: 1; min-width: 150px; margin: 0.5rem;">
+                <div style="background: white; border-radius: 50%; width: 60px; height: 60px; display: flex; 
+                            align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem;">2️⃣</div>
+                <h4 style="color: #856404; margin: 0;">Process</h4>
+                <p style="color: #6c5ce7; margin: 0.5rem 0 0; font-size: 0.9rem;">AI processes & indexes</p>
+            </div>
+            <div style="text-align: center; flex: 1; min-width: 150px; margin: 0.5rem;">
+                <div style="background: white; border-radius: 50%; width: 60px; height: 60px; display: flex; 
+                            align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem;">3️⃣</div>
+                <h4 style="color: #856404; margin: 0;">Chat</h4>
+                <p style="color: #6c5ce7; margin: 0.5rem 0 0; font-size: 0.9rem;">Ask questions & get answers</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    ---
+    # Call to Action
+    st.markdown("""
+    <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                border-radius: 15px; margin: 2rem 0; color: white;">
+        <h2 style="color: white; margin: 0 0 1rem 0;">Ready to Get Started?</h2>
+        <p style="color: #f0f0f0; font-size: 1.1rem; margin: 0 0 1.5rem 0;">Join thousands of users who are already using AI to chat with their documents!</p>
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 10px; min-width: 200px;">
+                <h4 style="color: white; margin: 0 0 0.5rem 0;">✨ Free to Use</h4>
+                <p style="color: #e0e0e0; margin: 0; font-size: 0.9rem;">No hidden costs, no subscriptions</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 10px; min-width: 200px;">
+                <h4 style="color: white; margin: 0 0 0.5rem 0;">🔒 Secure & Private</h4>
+                <p style="color: #e0e0e0; margin: 0; font-size: 0.9rem;">Your data stays private and secure</p>
+            </div>
+        </div>
+        <p style="color: #f0f0f0; font-size: 1rem; margin: 1.5rem 0 0 0; font-weight: 500;">
+            👈 Use the sidebar to <strong>Login</strong> or <strong>Register</strong> and start your AI journey!
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    **Ready to get started?** Use the sidebar to login or register!
-    """)
+    # Technology Stack
+    st.markdown("""
+    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; margin: 1rem 0; border: 1px solid #dee2e6;">
+        <h3 style="color: #495057; margin: 0 0 1rem 0; text-align: center;">🛠️ Powered by Modern Technology</h3>
+        <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <span style="background: #e3f2fd; color: #1976d2; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 500;">FastAPI</span>
+            <span style="background: #f3e5f5; color: #7b1fa2; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 500;">Streamlit</span>
+            <span style="background: #e8f5e8; color: #388e3c; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 500;">MongoDB</span>
+            <span style="background: #fff3e0; color: #f57c00; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 500;">Pinecone</span>
+            <span style="background: #fce4ec; color: #c2185b; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 500;">OpenAI</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def show_main_app():
@@ -698,7 +791,7 @@ def show_profile_page():
         
         # Delete Profile Confirmation Dialog
         if st.session_state.get("show_delete_confirmation", False):
-            st.markdown("---")
+    st.markdown("---")
             st.error("⚠️ **DANGER ZONE**")
             st.warning("""
             **This action cannot be undone!**
