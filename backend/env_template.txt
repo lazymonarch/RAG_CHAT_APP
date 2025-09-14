@@ -31,3 +31,13 @@ ALLOWED_FILE_TYPES=pdf,txt,docx,doc
 HOST=0.0.0.0
 PORT=8000
 DEBUG=True
+
+# Email Configuration (for Gmail)
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_FROM=your-email@gmail.com
+MAIL_PORT=587
+MAIL_SERVER=smtp.gmail.com
+MAIL_TLS=True
+MAIL_SSL=False
+USE_CREDENTIALS=True

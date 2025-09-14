@@ -4,8 +4,10 @@ from app.schemas.user import UserCreate, UserResponse
 from app.db.mongodb_models import User, UserRole
 from app.core.security import verify_password, create_access_token, get_password_hash
 from app.core.config import settings
+from app.core.email_service import send_welcome_email
 from app.dependencies import get_current_user
 from datetime import timedelta
+import asyncio
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -31,6 +33,9 @@ async def register_user(user_data: UserCreate):
     )
     
     await user.insert()
+    
+    # Send welcome email asynchronously (don't wait for it)
+    asyncio.create_task(send_welcome_email(user.email, user.name or "User"))
     
     return UserResponse(
         id=str(user.id),

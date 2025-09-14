@@ -242,6 +242,14 @@ class APIClient:
             return False, f"File type '{file_extension}' not allowed. Allowed: {', '.join(ALLOWED_FILE_TYPES)}"
         
         return True, "File is valid"
+    
+    def email_chat_summary(self, conversation_id: str) -> Dict[str, Any]:
+        """Send chat summary via email."""
+        response = self.session.post(
+            f"{self.base_url}/chat/{conversation_id}/email",
+            headers=self._get_headers()
+        )
+        return self._handle_response(response)
 
 
 # Global API client instance

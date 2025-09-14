@@ -47,6 +47,10 @@ class DocumentProcessingService:
                     "document_id": None
                 }
             
+            # Log text extraction details for debugging
+            logger.info(f"Extracted text length: {len(text_content)} characters")
+            logger.info(f"Text preview: {text_content[:200]}...")
+            
             # Create document record in MongoDB first to get the ID
             document_record = DocumentModel(
                 user_id=user_id,

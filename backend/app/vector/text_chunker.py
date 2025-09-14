@@ -16,11 +16,15 @@ class TextChunker:
         """Initialize text splitter."""
         try:
             # Initialize text splitter with character-based chunking
+            # Use larger chunks to reduce total number of chunks
+            effective_chunk_size = max(settings.CHUNK_SIZE, 1000)  # Minimum 1000 chars
+            effective_overlap = min(settings.CHUNK_OVERLAP, 200)   # Maximum 200 chars overlap
+            
             self.text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=settings.CHUNK_SIZE,
-                chunk_overlap=settings.CHUNK_OVERLAP,
+                chunk_size=effective_chunk_size,
+                chunk_overlap=effective_overlap,
                 length_function=len,  # Use character count
-                separators=["\n\n", "\n", " ", ""]
+                separators=["\n\n", "\n", ". ", " ", ""]  # Better separators for larger chunks
             )
             
             logger.info("Text chunker initialized successfully")
@@ -46,27 +50,39 @@ class TextChunker:
             if not self.text_splitter:
                 self.initialize()
             
+            # Validate input text
+            if not text or not text.strip():
+                logger.warning("Empty or whitespace-only text provided for chunking")
+                return []
+            
             # Split text into chunks
             chunks = self.text_splitter.split_text(text)
+            
+            # Filter out empty chunks
+            valid_chunks = [chunk for chunk in chunks if chunk and chunk.strip()]
+            
+            if not valid_chunks:
+                logger.warning("No valid chunks created from text")
+                return []
             
             # Create chunk metadata
             chunk_metadata = metadata or {}
             chunked_texts = []
             
-            for i, chunk in enumerate(chunks):
+            for i, chunk in enumerate(valid_chunks):
                 chunk_data = {
-                    "text": chunk,
+                    "text": chunk.strip(),
                     "chunk_index": i,
                     "token_count": self.count_tokens(chunk),
                     "metadata": {
                         **chunk_metadata,
                         "chunk_index": i,
-                        "total_chunks": len(chunks)
+                        "total_chunks": len(valid_chunks)
                     }
                 }
                 chunked_texts.append(chunk_data)
             
-            logger.info(f"Created {len(chunked_texts)} chunks from text")
+            logger.info(f"Created {len(chunked_texts)} valid chunks from text")
             return chunked_texts
             
         except Exception as e:

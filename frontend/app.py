@@ -426,7 +426,7 @@ def show_chat_interface():
     input_key = f"chat_input_{conversation_id}"
     user_input = st.text_input("Type your message:", key=input_key)
     
-    col1, col2 = st.columns([1, 1])
+    col1, col2, col3 = st.columns([1, 1, 1])
     
     with col1:
         if st.button("Send", type="primary"):
@@ -438,6 +438,10 @@ def show_chat_interface():
         if st.button("End Chat"):
             end_current_chat()
             st.rerun()
+    
+    with col3:
+        if st.button("📧 Email Chat"):
+            email_chat_summary(conversation_id)
 
 
 def show_chat_history_page():
@@ -551,7 +555,7 @@ def show_conversation_details(conversation_id: str):
             st.subheader("📚 Sources Used")
             for source in conversation['sources']:
                 st.write(f"• {source.get('filename', 'Unknown')} (Score: {source.get('score', 0):.2f})")
-        
+    
     except Exception as e:
         st.error(f"Failed to load conversation details: {str(e)}")
 
@@ -747,6 +751,16 @@ def end_current_chat():
     st.session_state.conversation_type = None
     st.session_state.chat_messages = []
     st.success("Chat session ended!")
+
+
+def email_chat_summary(conversation_id: str):
+    """Send chat summary via email."""
+    try:
+        from utils.api_client import api_client
+        result = api_client.email_chat_summary(conversation_id)
+        st.success(result.get("message", "Chat summary sent to your email!"))
+    except Exception as e:
+        st.error(f"Failed to send email: {str(e)}")
 
 
 def logout_user():

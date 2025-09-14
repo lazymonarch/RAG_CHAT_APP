@@ -42,6 +42,16 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     
+    # Email Configuration
+    MAIL_USERNAME: str = ""
+    MAIL_PASSWORD: str = ""
+    MAIL_FROM: str = ""
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str = "smtp.gmail.com"
+    MAIL_TLS: bool = True
+    MAIL_SSL: bool = False
+    USE_CREDENTIALS: bool = True
+    
     # LLM Configuration
     MAX_OUTPUT_TOKENS: int = 500   # Maximum response length for RAG
     TEMPERATURE: float = 0.1       # Low temperature for factual responses

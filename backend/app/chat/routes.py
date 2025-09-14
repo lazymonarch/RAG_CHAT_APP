@@ -10,6 +10,7 @@ from app.schemas.chat import (
 from app.chat.service import openai_chat_service
 from app.chat.conversation_service import conversation_service
 from app.vector.vector_service import vector_service
+from app.core.email_service import send_chat_summary_email
 from app.dependencies import get_current_user
 from app.db.mongodb_models import User, Conversation, Message
 from app.core.config import settings
@@ -377,4 +378,88 @@ async def get_selectable_documents(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve documents"
+        )
+
+
+@router.post("/{conversation_id}/email")
+async def email_chat_summary(
+    conversation_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Send chat summary via email to the user."""
+    try:
+        # Get conversation details
+        conversation = await conversation_service.get_conversation(conversation_id, str(current_user.id))
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found"
+            )
+        
+        # Get messages
+        messages = conversation.messages
+        
+        if not messages:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No messages in this conversation"
+            )
+        
+        # Generate optional AI summary using existing chat service
+        summary = None
+        try:
+            # Create a simple summary prompt
+            conversation_text = "\n".join([
+                f"{msg.role.capitalize()}: {msg.content}" 
+                for msg in messages
+            ])
+            
+            summary_prompt = f"""
+            Please provide a comprehensive summary of this conversation in 4-6 sentences. Structure it to cover:
+            1. What the conversation was about (topic/context)
+            2. Key points or insights discussed
+            3. Any recommendations or next steps mentioned
+            4. Important details or conclusions
+            
+            Format as flowing text with complete sentences. Focus on extracting meaningful insights and actionable information:
+            
+            {conversation_text}
+            """
+            
+            # Use the existing chat service to generate summary
+            summary_response = await openai_chat_service.generate_response(
+                query=summary_prompt,
+                context="",
+                conversation_history=[]
+            )
+            summary = summary_response.get("response", "")
+            
+        except Exception as e:
+            logger.warning(f"Failed to generate AI summary: {e}")
+            # Continue without summary
+        
+        # Send email
+        success = await send_chat_summary_email(
+            email=current_user.email,
+            name=current_user.name or "User",
+            chat_title=conversation.title,
+            messages=[{"role": msg.role, "content": msg.content} for msg in messages],
+            summary=summary
+        )
+        
+        if success:
+            return {"message": "Chat summary sent to your email successfully!"}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Email service is not configured. Please contact the administrator to set up email functionality."
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to email chat summary: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send chat summary"
         )
