@@ -1,14 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
+import logging
 from app.schemas.user import UserCreate, UserResponse, UserUpdate, AdminUserCreate, AdminCreateResponse, UserProfileResponse
 from app.db.mongodb_models import User, UserRole
 from app.core.security import get_password_hash, create_access_token
 from app.core.config import settings
 from app.dependencies import get_current_user, require_admin, get_current_user_response
 from app.users.profile_service import profile_service
+from app.users.delete_service import user_delete_service
 from datetime import timedelta, datetime
 
 router = APIRouter(prefix="/users", tags=["users"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=UserResponse)
@@ -262,6 +265,26 @@ async def update_my_profile(user_data: UserUpdate, current_user: User = Depends(
 
 @router.delete("/me/profile")
 async def delete_my_profile(current_user: User = Depends(get_current_user)):
-    """Delete current user's profile."""
-    await current_user.delete()
-    return {"message": "Profile deleted successfully"}
+    """Delete current user's profile and all associated data."""
+    try:
+        # Use the comprehensive delete service
+        result = await user_delete_service.delete_user_profile(str(current_user.id))
+        
+        if result["success"]:
+            return {
+                "message": "Profile and all associated data deleted successfully",
+                "deleted_items": result["deleted_items"],
+                "user_email": result["user_email"]
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result["error"]
+            )
+            
+    except Exception as e:
+        logger.error(f"Failed to delete user profile: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete profile"
+        )

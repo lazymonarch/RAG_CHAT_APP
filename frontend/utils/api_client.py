@@ -250,6 +250,14 @@ class APIClient:
             headers=self._get_headers()
         )
         return self._handle_response(response)
+    
+    def delete_profile(self) -> Dict[str, Any]:
+        """Delete user profile and all associated data."""
+        response = self.session.delete(
+            f"{self.base_url}/users/me/profile",
+            headers=self._get_headers()
+        )
+        return self._handle_response(response)
 
 
 # Global API client instance

@@ -651,11 +651,51 @@ def show_profile_page():
         with col2:
             st.metric("Storage Used", f"{storage_used:.2f} MB", f"{storage_percent:.1f}%")
         
-        # Back Button
+        # Action Buttons
         st.markdown("---")
-        if st.button("← Back to Chat", type="primary"):
-            st.session_state.current_page = "universal_chat"
-            st.rerun()
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("← Back to Chat", type="primary"):
+                st.session_state.current_page = "universal_chat"
+                st.rerun()
+        
+        with col2:
+            if st.button("🗑️ Delete Profile", type="secondary"):
+                st.session_state.show_delete_confirmation = True
+                st.rerun()
+        
+        # Delete Profile Confirmation Dialog
+        if st.session_state.get("show_delete_confirmation", False):
+            st.markdown("---")
+            st.error("⚠️ **DANGER ZONE**")
+            st.warning("""
+            **This action cannot be undone!**
+            
+            Deleting your profile will permanently remove:
+            - Your account and personal information
+            - All your chat conversations and messages
+            - All your uploaded documents
+            - All your data from our systems
+            
+            Are you absolutely sure you want to delete your profile?
+            """)
+            
+            col1, col2, col3 = st.columns([1, 1, 1])
+            
+            with col1:
+                if st.button("✅ Yes, Delete Everything", type="primary"):
+                    delete_user_profile()
+            
+            with col2:
+                if st.button("❌ Cancel", type="secondary"):
+                    st.session_state.show_delete_confirmation = False
+                    st.rerun()
+            
+            with col3:
+                if st.button("🔒 Keep Profile", type="secondary"):
+                    st.session_state.show_delete_confirmation = False
+                    st.rerun()
     
     except Exception as e:
         st.error(f"Error loading profile: {str(e)}")
@@ -761,6 +801,32 @@ def email_chat_summary(conversation_id: str):
         st.success(result.get("message", "Chat summary sent to your email!"))
     except Exception as e:
         st.error(f"Failed to send email: {str(e)}")
+
+
+def delete_user_profile():
+    """Delete user profile and all associated data."""
+    try:
+        from utils.api_client import api_client
+        result = api_client.delete_profile()
+        
+        if result.get("message"):
+            # Clear all session state
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            
+            # Show success message
+            st.success("✅ Profile deleted successfully!")
+            st.info("All your data has been permanently removed from our systems.")
+            
+            # Redirect to login after a short delay
+            st.markdown("Redirecting to login page...")
+            st.rerun()
+        else:
+            st.error(f"Failed to delete profile: {result.get('error', 'Unknown error')}")
+            
+    except Exception as e:
+        st.error(f"Failed to delete profile: {str(e)}")
+        st.session_state.show_delete_confirmation = False
 
 
 def logout_user():
