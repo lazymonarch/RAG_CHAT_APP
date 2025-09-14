@@ -4,7 +4,6 @@ API Client for communicating with FastAPI backend
 import requests
 import streamlit as st
 from typing import Dict, List, Optional, Any
-import json
 from config import (
     AUTH_ENDPOINTS, USER_ENDPOINTS, DOCUMENT_ENDPOINTS, CHAT_ENDPOINTS,
     MAX_FILE_SIZE_MB, ALLOWED_FILE_TYPES

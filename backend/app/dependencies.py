@@ -4,7 +4,6 @@ from jose import JWTError
 from app.core.security import verify_token
 from app.db.mongodb_models import User
 from app.schemas.user import UserResponse
-from typing import Optional
 
 # Security scheme
 security = HTTPBearer()

@@ -2,13 +2,11 @@
 RAG Chat Application - Streamlit Frontend
 """
 import streamlit as st
-from streamlit_option_menu import option_menu
 from config import APP_TITLE, APP_ICON, APP_LAYOUT, APP_SIDEBAR_STATE
 from components.auth import (
     login_form, register_form, logout_button, user_info, 
     is_authenticated, show_register
 )
-from components.chat import chat_interface, chat_history_sidebar, test_chat
 from components.documents import document_upload, document_list, document_stats
 
 
@@ -702,7 +700,7 @@ def show_profile_page():
         
         # Delete Profile Confirmation Dialog
         if st.session_state.get("show_delete_confirmation", False):
-            st.markdown("---")
+    st.markdown("---")
             st.error("⚠️ **DANGER ZONE**")
             st.warning("""
             **This action cannot be undone!**

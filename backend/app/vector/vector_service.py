@@ -1,5 +1,4 @@
 from typing import List, Dict, Any, Optional
-import asyncio
 import logging
 from app.vector.pinecone_client import pinecone_client
 from app.vector.openai_embedding_service import openai_embedding_service

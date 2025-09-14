@@ -1,6 +1,0 @@
-Strategy,Chunk Size (tokens),Overlap (tokens),Best For,Implementation Complexity,Use Case
-Fixed-size Chunking,200-800,20-80 (10-20%),"Uniform documents, quick prototyping",Low,Your scenario - simple documents
-Semantic Chunking,300-1000,30-100 (10-15%),"Coherent topics, better quality",High,Production with quality focus
-Recursive Chunking,200-800,20-80 (10-20%),Mixed document types,Medium,"General purpose, good balance"
-Document Structure Chunking,Variable,Minimal,"Structured documents (PDFs, reports)",Medium-High,"Technical docs, manuals"
-Sentence-based Chunking,100-300,10-30 (10-20%),"Short documents, precise queries",Low-Medium,FAQ-style documents

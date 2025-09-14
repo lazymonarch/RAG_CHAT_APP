@@ -1,6 +1,5 @@
 import openai
 from typing import List, Dict, Any, Optional
-import asyncio
 import logging
 from app.core.config import settings
 

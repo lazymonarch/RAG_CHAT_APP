@@ -6,7 +6,6 @@ import logging
 from typing import Dict, Any
 from app.db.mongodb_models import User, Conversation, Message, Document, DocumentChunk
 from app.vector.pinecone_client import pinecone_client
-from app.vector.vector_service import vector_service
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +15,6 @@ class UserDeleteService:
     
     def __init__(self):
         self.pinecone = pinecone_client
-        self.vector_service = vector_service
     
     async def delete_user_profile(self, user_id: str) -> Dict[str, Any]:
         """
